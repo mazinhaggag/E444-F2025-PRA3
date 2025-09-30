@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from functools import wraps
 from pathlib import Path
 
 from flask import (
@@ -15,7 +16,6 @@ from flask import (
     jsonify,
 )
 from flask_sqlalchemy import SQLAlchemy
-from functools import wraps
 
 
 basedir = Path(__file__).resolve().parent
@@ -28,10 +28,10 @@ url = os.getenv("DATABASE_URL", f"sqlite:///{Path(basedir).joinpath(DATABASE)}")
 if url.startswith("postgres://"):
     url = url.replace("postgres://", "postgresql://", 1)
 
+SQLALCHEMY_DATABASE_URI = url
 USERNAME = "admin"
 PASSWORD = "admin"
 SECRET_KEY = "change_me"
-SQLALCHEMY_DATABASE_URI = url
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -41,6 +41,8 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 # init sqlalchemy
 db = SQLAlchemy(app)
+
+from project import models
 
 
 def login_required(f):
@@ -52,9 +54,6 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
-
-
-from project import models
 
 
 @app.route("/")
