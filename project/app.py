@@ -22,16 +22,15 @@ basedir = Path(__file__).resolve().parent
 
 # configuration
 DATABASE = "flaskr.db"
-
+USERNAME = "admin"
+PASSWORD = "admin"
+SECRET_KEY = "change_me"
 url = os.getenv("DATABASE_URL", f"sqlite:///{Path(basedir).joinpath(DATABASE)}")
 
 if url.startswith("postgres://"):
     url = url.replace("postgres://", "postgresql://", 1)
 
 SQLALCHEMY_DATABASE_URI = url
-USERNAME = "admin"
-PASSWORD = "admin"
-SECRET_KEY = "change_me"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -75,15 +74,6 @@ def add_entry():
     return redirect(url_for("index"))
 
 
-@app.route("/search/", methods=["GET"])
-def search():
-    query = request.args.get("query")
-    entries = db.session.query(models.Post)
-    if query:
-        return render_template("search.html", entries=entries, query=query)
-    return render_template("search.html")
-
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """User login/authentication/session management."""
@@ -114,13 +104,23 @@ def delete_entry(post_id):
     """Deletes post from database."""
     result = {"status": 0, "message": "Error"}
     try:
-        db.session.query(models.Post).filter_by(id=post_id).delete()
+        new_id = post_id
+        db.session.query(models.Post).filter_by(id=new_id).delete()
         db.session.commit()
         result = {"status": 1, "message": "Post Deleted"}
         flash("The entry was deleted.")
     except Exception as e:
         result = {"status": 0, "message": repr(e)}
     return jsonify(result)
+
+
+@app.route("/search/", methods=["GET"])
+def search():
+    query = request.args.get("query")
+    entries = db.session.query(models.Post)
+    if query:
+        return render_template("search.html", entries=entries, query=query)
+    return render_template("search.html")
 
 
 if __name__ == "__main__":
